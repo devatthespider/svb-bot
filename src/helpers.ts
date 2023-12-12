@@ -7,11 +7,11 @@ import { getOrCreateAssociatedTokenAccount, Account, TOKEN_PROGRAM_ID } from '@s
 import { BorshCoder, Idl } from '@coral-xyz/anchor';
 require('dotenv').config();
 
-const CONNECTION = new Connection(process.env.ANCHOR_PROVIDER_URL);
 const IDL = JSON.parse(fs.readFileSync("./src/idl.json", "utf8"));
-const TOKEN = new PublicKey(process.env.BONK);
-const VERSION = process.env.VERSION;
-const VERSION_SEED = new anchor.BN(VERSION).toBuffer('le', 1);
+let CONNECTION;
+let TOKEN;
+let VERSION;
+let VERSION_SEED;
 export let PROGRAM_ID;
 export let PROGRAM;
 
@@ -212,14 +212,34 @@ export const getBotKey = async (): Promise<boolean> => {
         }
         console.log('No bot keypair found, check your .env file BOT_KEY argument or your key: "keys/id.json"');
     } catch (error) {
-        console.log(`Error getting bot keypair: ${error}`);
+        console.log(`Error getting bot keypair: ${error} - check your .env file BOT_KEY argument or your key: "keys/id.json"`);
     }
     return false;
 }
 
-export const setAnchorProvider = async () => {
+export const setEnvironment = async () => {
     const providerAnchor = anchor.AnchorProvider.env();
     anchor.setProvider(providerAnchor);
     PROGRAM_ID = new PublicKey(process.env.PROGRAM);
     PROGRAM = new anchor.Program(IDL, PROGRAM_ID);
+    CONNECTION  = new Connection(process.env.ANCHOR_PROVIDER_URL);
+    TOKEN = new PublicKey(process.env.BONK);
+    VERSION = process.env.VERSION;
+    VERSION_SEED = new anchor.BN(VERSION).toBuffer('le', 1);
+}
+
+export const checkEnv = (): boolean => {
+    if (!fs.existsSync('.env')) {
+        console.log('No .env file found, check example.env for reference and look at the readme.md file');
+        return false;
+    } else {
+        if (!process.env.ANCHOR_PROVIDER_URL) {
+            console.log('No ANCHOR_PROVIDER_URL found in .env file');
+            return false;
+        } else if (!process.env.BOT_KEY && !fs.existsSync('./keys/id.json')) {
+            console.log('No BOT_KEY found in .env file or keys/id.json file');
+            return false;
+        }
+    }
+    return true;
 }

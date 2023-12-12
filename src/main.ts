@@ -1,11 +1,12 @@
-import { getBotKey, getContractConfig, setAnchorProvider } from './helpers';
+import { checkEnv, getBotKey, getContractConfig, setEnvironment } from './helpers';
 import { startBot } from './bot';
 
 const runBot = async () => {
     console.log('Running bot...');
 
+    if (!checkEnv()) return;
     if (!(await getBotKey())) return;
-    setAnchorProvider();
+    setEnvironment();
     await getContractConfig();
     await startBot();
 }
