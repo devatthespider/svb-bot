@@ -4,28 +4,6 @@ import { buy, contractConfig, getGameInfo, getTokenAccount, refreshTokenAmount }
 const runEvery = process.env.RUN_INTERVAL ? Number(process.env.RUN_INTERVAL) : 10000;
 const pricePerKey = Number(process.env.PRICE_PER_KEY) * (10 ** Number(process.env.DECIMALS));
 
-const isGameOver = (blocktimeEnd: number, lastBuyer: PublicKey) => {
-    const currentTime = new Date().getTime();
-    const mstoEnd = (blocktimeEnd * 1000) - currentTime;
-    if (mstoEnd < -60000 && blocktimeEnd != 0) {
-        console.log(`Game is over, winner: ${lastBuyer.toString()}`);
-        return true;
-    } 
-    return false;
-}
-
-const hasEnoughMoney = async () => {
-    if (contractConfig.accountTokenAmount < pricePerKey) {
-        const tokenAccount = await getTokenAccount(contractConfig.botKeypair.publicKey, contractConfig.botKeypair);
-        contractConfig.accountTokenAmount = Number(tokenAccount.amount);
-        if (contractConfig.accountTokenAmount < pricePerKey) {
-            console.log(`Not enough token to buy keys ${contractConfig.accountTokenAmount / (10 ** 5)} BONK left.`);
-            return false;
-        }
-    }
-    return true;
-}
-
 const shouldBuy = (lastBuyer: PublicKey, blocktimeEnd: number) => {
     const currentTime = new Date().getTime();
     const mstoEnd = (blocktimeEnd * 1000) - currentTime;
@@ -36,7 +14,17 @@ const shouldBuy = (lastBuyer: PublicKey, blocktimeEnd: number) => {
     return false;
 }
 
-const buyKey = async (blocktimeEnd: number) => {
+export const isGameOver = (blocktimeEnd: number, lastBuyer: PublicKey) => {
+    const currentTime = new Date().getTime();
+    const mstoEnd = (blocktimeEnd * 1000) - currentTime;
+    if (mstoEnd < -60000 && blocktimeEnd != 0) {
+        console.log(`Game is over, winner: ${lastBuyer.toString()}`);
+        return true;
+    } 
+    return false;
+}
+
+export const buyKey = async (blocktimeEnd: number) => {
     console.time('buyKey');
     const currentTime = new Date().getTime();
     const mstoEnd = (blocktimeEnd * 1000) - currentTime;
@@ -53,6 +41,18 @@ const buyKey = async (blocktimeEnd: number) => {
     console.timeEnd('buyKey');
     const time = new Date().toLocaleTimeString();
     console.log(`${time}: Bought a key ${mstoEnd / 1000} seconds before the end - ${signature}`);
+}
+
+export const hasEnoughMoney = async () => {
+    if (contractConfig.accountTokenAmount < pricePerKey) {
+        const tokenAccount = await getTokenAccount(contractConfig.botKeypair.publicKey, contractConfig.botKeypair);
+        contractConfig.accountTokenAmount = Number(tokenAccount.amount);
+        if (contractConfig.accountTokenAmount < pricePerKey) {
+            console.log(`Not enough token to buy keys ${contractConfig.accountTokenAmount / (10 ** 5)} BONK left.`);
+            return false;
+        }
+    }
+    return true;
 }
 
 export const startBot = async (): Promise<void> => {
